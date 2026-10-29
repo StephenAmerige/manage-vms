@@ -72,7 +72,7 @@ Initial access to the stock cloud-image account may use the OpenStack key pair s
 The configuration portion of the example looks like this (keys are deliberately incomplete):
 
 ```bash
-Group='reframe'
+Group='collab'
 GroupID=2000
 
 declare -A UserKey=(
@@ -126,9 +126,9 @@ The zsh startup file sources top-level `~/.zshrc.d/*.zsh` scripts. The `files/zs
 
 For the default configuration:
 
-- Group: `reframe`, GID `2000` (override with `-i`).
-- Shared account: `reframe`, with home `/home/reframe` and shell `/usr/sbin/nologin`.
-- Shared directory: `/home/reframe`, owned by `reframe:reframe` with setgid and mode `2770`.
+- Group: `collab`, GID `2000` (override with `-i`).
+- Shared account: `collab`, with home `/home/collab` and shell `/usr/sbin/nologin`.
+- Shared directory: `/home/collab`, owned by `collab:collab` with setgid and mode `2770`.
 - Access and default ACLs: owner and group receive `rwx`; others receive no access. Default ACLs establish inherited collaboration permissions for new contents.
 
 This arrangement is meant for users to collaborate inside the shared directory **without** making their private home directories group-accessible. Default ACLs are not a guarantee that every application-created file will be writable by the group: applications can explicitly create or change restrictive file modes.
@@ -155,10 +155,10 @@ On a new Ubuntu VM, after obtaining this repository and becoming root (or using 
 
 ```bash
 sudo bash vm-bootstrap.sh
-sudo bash create-shared-group.sh -g reframe -i 2000
+sudo bash create-shared-group.sh -g collab -i 2000
 sudo bash create-user.sh \
    -u exampleuser \
-   -g reframe \
+   -g collab \
    -k "$(cat /path/to/exampleuser.pub)"
 ```
 
@@ -179,25 +179,25 @@ sudo tail -n 100 /var/log/cloud-init-output.log
 For the default group and the two **sample** usernames, check:
 
 ```bash
-getent group reframe
-getent passwd reframe
+getent group collab
+getent passwd collab
 id steve
 id georgine
-stat -c '%A %U:%G %n' /home/reframe /home/steve /home/georgine
-getfacl /home/reframe
+stat -c '%A %U:%G %n' /home/collab /home/steve /home/georgine
+getfacl /home/collab
 sudo systemctl is-active docker
 sudo docker version
 ```
 
-You should find a non-login `reframe` account; both individual users should belong to `reframe`, while each has their own primary group. `/home/reframe` should retain setgid and inheritable ACLs. Docker should be active.
+You should find a non-login `collab` account; both individual users should belong to `collab`, while each has their own primary group. `/home/collab` should retain setgid and inheritable ACLs. Docker should be active.
 
 A small cross-user ACL smoke test, **after both sample accounts have been created**:
 
 ```bash
-sudo -u steve sh -c 'umask 077; touch /home/reframe/.acl-smoke-test'
-sudo -u georgine test -w /home/reframe/.acl-smoke-test
-getfacl /home/reframe/.acl-smoke-test
-sudo rm -f /home/reframe/.acl-smoke-test
+sudo -u steve sh -c 'umask 077; touch /home/collab/.acl-smoke-test'
+sudo -u georgine test -w /home/collab/.acl-smoke-test
+getfacl /home/collab/.acl-smoke-test
+sudo rm -f /home/collab/.acl-smoke-test
 ```
 
 The second command should exit successfully: it checks that one collaborator can write to a file created by another, despite the deliberately restrictive umask. Substitute your actual usernames if you changed the example.

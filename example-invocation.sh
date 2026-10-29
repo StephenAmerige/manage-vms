@@ -5,7 +5,7 @@
 set -euo pipefail
 
 # THIS INSTANCE'S COLLABORATIVE GROUP AND USERS
-Group='reframe'
+Group='collab'
 GroupID=2000
 
 declare -A UserKey=(
