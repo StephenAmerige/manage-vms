@@ -21,7 +21,7 @@ apt-get install -y git ca-certificates
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 
-git clone https://github.com/psagriculture/manage-vms.git "$TMP/manage-vms"
+git clone https://github.com/StephenAmerige/manage-vms.git "$TMP/manage-vms"
 cd "$TMP/manage-vms"
 
 # BOOTSTRAP THE OS BEFORE CREATING USERS (/etc/skel, zsh, Vim).

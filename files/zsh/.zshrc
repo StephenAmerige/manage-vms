@@ -69,7 +69,6 @@ alias ..='. "$HOME"/.zshrc'
 alias d='dirs -v'
 alias h='fc -li'
 alias D='docker'
-alias l='bash-do :git:log'
 
 #***********************************************************************#
 #* FUNCTIONS                                                           *#
