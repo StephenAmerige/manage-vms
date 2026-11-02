@@ -4,7 +4,10 @@
 # The repository must be anonymously cloneable from the VM.
 set -euo pipefail
 
-# INSTANCE CONFIGURATION
+################################
+# INSTANCE CONFIGURATION BEGIN #
+#    EDIT THIS SECTION ONLY    #
+################################
 Group='collab'
 GroupID=2000
 RebootAfterProvisioning=true
@@ -18,6 +21,9 @@ declare -A UserKey=(
 declare -a SudoUsers=(
    steve
 )
+##############################
+# INSTANCE CONFIGURATION END #
+##############################
 
 # FETCH THE REUSABLE PROVISIONING SCRIPTS
 export DEBIAN_FRONTEND=noninteractive
