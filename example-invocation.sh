@@ -21,9 +21,6 @@ declare -A UserKey=(
 declare -a SudoUsers=(
    steve
 )
-##############################
-# INSTANCE CONFIGURATION END #
-##############################
 
 # Specify the Timezone
 TimeZone=
