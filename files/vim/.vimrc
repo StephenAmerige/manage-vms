@@ -1,3 +1,9 @@
+" Vim configuration (Vim 8+/9+)
+" Canonical source: files/vim/.vimrc
+" Local overrides: ~/.vim/plugin/rc.vim
+" Leader is comma; most custom shortcuts work in Normal mode only.
+" Note: run :set paste before terminal pastes if bracketed paste is unavailable.
+
 " DO NOT MAKE CHANGES TO THIS FILE =================================
 " Instead, place custom changes in $HOME/.vim/plugin/rc.vim
 
@@ -7,10 +13,11 @@ syntax on
 filetype on
 
 let mapleader=","
+" Leader-prefixed shortcuts are Normal-mode-only unless specified otherwise.
 set path+=$VIMRUNTIME
 set laststatus=2 cmdheight=2 mousehide wrap number nofoldenable
 set ai nocindent ignorecase expandtab incsearch hlsearch
-set tabstop=4 shiftwidth=4 previewheight=24 formatoptions=l backspace=indent,eol,start t_kb
+set tabstop=4 shiftwidth=4 previewheight=24 formatoptions=l backspace=indent,eol,start
 set splitright nosplitbelow noequalalways linebreak showbreak=\ \ \
 set sessionoptions+=winpos,resize
 set statusline=%<%f%h%w%m%r%=%l\ of\ %L\ col\ %c%V,\ char\ %o\ %P\ x%B
@@ -19,22 +26,25 @@ set cpo-=<
 set background=light
 set guioptions+=b
 set guioptions-=T
-set fileformats=dos,mac,unix
 set printoptions=header:0
 set mps+=<:>
 set viminfo='50,n$HOME/.vim/.viminfo
-set ffs=unix,dos,mac
+set fileformats=unix,dos,mac
 set backup
 set writebackup
 set backupdir=$HOME/.vim/save//
 set directory=$HOME/.vim/swp//
 set undodir=$HOME/.vim/undo//
+if isdirectory(expand('~/.vim/undo'))
+   set undofile
+endif
 set patchmode=.save
 set cursorline
 set t_Co=256
 set timeout
 set timeoutlen=500
-set t_BE=
+" Preserve Vim bracketed paste support; do not disable t_BE.
+" Retain original preference: do not switch terminal alternate-screen mode.
 set t_ti=
 set t_te=
 let c_minlines=400
@@ -56,7 +66,13 @@ hi DiffChange  term=bold ctermfg=16  ctermbg=254 guifg=#000000 guibg=#e4e4e4
 hi DiffText    term=bold ctermfg=16  ctermbg=222 guifg=#000000 guibg=#ffd787
 hi DiffDelete  term=bold ctermfg=225 ctermbg=225 guifg=#ffd7ff guibg=#ffd7ff
 
+" Rebuild only our matchadd() highlights; preserve third-party matches.
 fu! RefreshEggHighlighting()
+   for l:match in getmatches()
+      if get(l:match, 'group', '') =~# '^bashg'
+         silent! call matchdelete(l:match.id)
+      endif
+   endfor
    let P_Name=':[a-zA-Z0-9\.-]\+'
    let P_Dir_Name='\(' . P_Name . '\|' . ':[a-zA-Z0-9\.-]\+/[a-zA-Z0-9\.-]\+' . '\)'
    let P_RE='\(' . '@\?' . '\|' . P_Name . '\|' . '@' . P_Name . '\)'
@@ -143,176 +159,170 @@ fu! RefreshEggHighlighting()
    call matchadd('bashgComment','^\s*\zs#.*$', -1)
    call matchadd('bashgComment','^\s\zs#.*$', -1)
 
-   echo
 endfunc
 
 " Fonts
 fu! FontBigger()
     try
-        throw $currentFontSize
+        throw string(g:current_font_size)
     catch /^6/
         se guifont=Lucida\ Console\ Semi-Condensed\ 8
-        let $currentFontSize=8
+        let g:current_font_size=8
     catch /^8/
         se guifont=Lucida\ Console\ Semi-Condensed\ 9
-        let $currentFontSize=9
+        let g:current_font_size=9
     catch /^9/
         se guifont=Lucida\ Console\ Semi-Condensed\ 10
-        let $currentFontSize=10
+        let g:current_font_size=10
     catch /^10/
         se guifont=Lucida\ Console\ Semi-Condensed\ 11
-        let $currentFontSize=11
+        let g:current_font_size=11
     catch /^11/
         se guifont=Lucida\ Console\ Semi-Condensed\ 12
-        let $currentFontSize=12
+        let g:current_font_size=12
     catch /^12/
         se guifont=Lucida\ Console\ Semi-Condensed\ 14
-        let $currentFontSize=14
+        let g:current_font_size=14
     catch /^14/
         se guifont=Lucida\ Console\ Semi-Condensed\ 16
-        let $currentFontSize=16
+        let g:current_font_size=16
     catch /^16/
         se guifont=Lucida\ Console\ Semi-Condensed\ 18
-        let $currentFontSize=18
+        let g:current_font_size=18
     catch /^18/
         se guifont=Lucida\ Console\ Semi-Condensed\ 24
-        let $currentFontSize=24
+        let g:current_font_size=24
     catch /^24/
         se guifont=Lucida\ Console\ Semi-Condensed\ 36
-        let $currentFontSize=36
+        let g:current_font_size=36
     catch /^36/
         se guifont=Lucida\ Console\ Semi-Condensed\ 48
-        let $currentFontSize=48
+        let g:current_font_size=48
     catch /^48/
         se guifont=Lucida\ Console\ Semi-Condensed\ 72
-        let $currentFontSize=72
+        let g:current_font_size=72
     catch /.*/
     endtry
 endfunc
 
 fu! FontSmaller()
     try
-        throw $currentFontSize
+        throw string(g:current_font_size)
     catch /^72/
         se guifont=Lucida\ Console\ Semi-Condensed\ 48
-        let $currentFontSize=48
+        let g:current_font_size=48
     catch /^48/
         se guifont=Lucida\ Console\ Semi-Condensed\ 36
-        let $currentFontSize=36
+        let g:current_font_size=36
     catch /^36/
         se guifont=Lucida\ Console\ Semi-Condensed\ 24
-        let $currentFontSize=24
+        let g:current_font_size=24
     catch /^24/
         se guifont=Lucida\ Console\ Semi-Condensed\ 18
-        let $currentFontSize=18
+        let g:current_font_size=18
     catch /^18/
         se guifont=Lucida\ Console\ Semi-Condensed\ 16
-        let $currentFontSize=16
+        let g:current_font_size=16
     catch /^16/
         se guifont=Lucida\ Console\ Semi-Condensed\ 14
-        let $currentFontSize=14
+        let g:current_font_size=14
     catch /^14/
         se guifont=Lucida\ Console\ Semi-Condensed\ 12
-        let $currentFontSize=12
+        let g:current_font_size=12
     catch /^12/
         se guifont=Lucida\ Console\ Semi-Condensed\ 11
-        let $currentFontSize=11
+        let g:current_font_size=11
     catch /^11/
         se guifont=Lucida\ Console\ Semi-Condensed\ 10
-        let $currentFontSize=10
+        let g:current_font_size=10
     catch /^10/
         se guifont=Lucida\ Console\ Semi-Condensed\ 9
-        let $currentFontSize=9
+        let g:current_font_size=9
     catch /^9/
         se guifont=Lucida\ Console\ Semi-Condensed\ 8
-        let $currentFontSize=8
+        let g:current_font_size=8
     catch /^8/
         se guifont=Lucida\ Console\ Semi-Condensed\ 6
-        let $currentFontSize=6
+        let g:current_font_size=6
     catch /.*/
     endtry
 endfunc
 
-let $currentFontSize=11
-call FontBigger()
+let g:current_font_size=12
+" GUI font changes are not meaningful in a terminal Vim session.
+if has('gui_running')
+   let g:current_font_size=11
+   call FontBigger()
+endif
 
 " Toggle word wrapping
-let $wrapState=0
+let g:wrap_state = 1
+set wrap
 fu! ToggleWrap()
-    if $wrapState == 0
-        set wrap
-        windo set wrap
-        let $wrapState=1
-    else
-        set nowrap
-        windo set nowrap
-        let $wrapState=0
-    endif
+   let g:wrap_state = !g:wrap_state
+   execute 'windo set ' . (g:wrap_state ? 'wrap' : 'nowrap')
 endfunc
-map ,w :call ToggleWrap()<CR>
-call ToggleWrap()
+nnoremap <silent> <leader>w :call ToggleWrap()<CR>
 
 " Formatting
-let $formatState=2
-fu! ToggleFormat()
-   if $formatState == 0
-      map ,f !'efmt -w90<CR>
-      let $formatState=1
-      echo "Formatting now wraps at 90"
-   elseif $formatState == 1
-      map ,f !'efmt -w100<CR>
-      let $formatState=2
-      echo "Formatting now wraps at 100"
-   else
-      map ,f !'efmt -w80<CR>
-      let $formatState=0
-      echo "Formatting now wraps at 80"
-   endif
+let g:format_state=2
+fu! SetFormatMapping()
+   let l:width = [80, 90, 100][g:format_state]
+   execute "nnoremap <silent> <leader>f !'efmt -w" . l:width . '<CR>'
 endfunc
-map ,F :call ToggleFormat()<CR>
-map ,f !'efmt -w100<CR>
+fu! ToggleFormat()
+   let g:format_state = (g:format_state + 1) % 3
+   call SetFormatMapping()
+   echo 'Formatting now wraps at ' . [80, 90, 100][g:format_state]
+endfunc
+nnoremap <silent> <leader>F :call ToggleFormat()<CR>
+call SetFormatMapping()
 
 " Toggle Remove Trailing Spaces on Save
-let $removeTrailingSpacesState=1
+let g:remove_trailing_spaces_state=1
 fu! ToggleRemoveTrailingSpaces()
-   if $removeTrailingSpacesState == 0
-      let $removeTrailingSpacesState=1
+   if g:remove_trailing_spaces_state == 0
+      let g:remove_trailing_spaces_state=1
       echo "Removing trailing spaces"
    else
-      let $removeTrailingSpacesState=0
+      let g:remove_trailing_spaces_state=0
       echo "Not removing trailing spaces"
    endif
 endfunc
-map ,s :call ToggleRemoveTrailingSpaces()<CR>
+nnoremap <silent> <leader>s :call ToggleRemoveTrailingSpaces()<CR>
 
 fu! RemoveTrailingSpaces()
-   if $removeTrailingSpacesState == 1
-      let l = line(".")
-      let c = col(".")
-      %s/\s\+$//e
-      call cursor(l, c)
+   if !g:remove_trailing_spaces_state || &l:filetype ==# 'markdown'
+      return
    endif
+   let l:view = winsaveview()
+   let l:search = @/
+   try
+      silent! keeppatterns %s/\s\+$//e
+   finally
+      let @/ = l:search
+      call winrestview(l:view)
+   endtry
 endfunc
-auto BufWritePre * call RemoveTrailingSpaces()
 
 " Toggle what happens when you press the ENTER key (selection)
 fu! ToggleKeywordIsPropertyState()
-    if $nextKeywordIsPropertyState == 0
+    if g:next_keyword_is_property_state == 0
         set iskeyword=@,48-57,_,192-255
-        let $nextKeywordIsPropertyState=1
+        let g:next_keyword_is_property_state=1
         echo "ENTER key selects: Standard characters only"
-    elseif $nextKeywordIsPropertyState == 1
+    elseif g:next_keyword_is_property_state == 1
         set iskeyword=@,47-57,_,192-255,.
-        let $nextKeywordIsPropertyState=2
+        let g:next_keyword_is_property_state=2
         echo "ENTER key now also selects dotted properties"
     else
         set iskeyword=@,47-57,_,192-255,@-@,+,-,.,(,),:
-        let $nextKeywordIsPropertyState=0
+        let g:next_keyword_is_property_state=0
         echo "ENTER key now also selects extended function and variable set"
     endif
 endfunc
 set iskeyword=@,48-57,_,192-255
-let $nextKeywordIsPropertyState=1
+let g:next_keyword_is_property_state=1
 
 let g:highlightword = 1
 fu! ToggleHighlightWord()
@@ -353,26 +363,25 @@ function! EnableHighlighting()
 endfunction
 
 function! DisableHighlighting()
-   unmap <silent> <CR>
+   silent! nunmap <CR>
 endfunction
 
 call EnableHighlighting()
-auto CmdwinEnter * call DisableHighlighting()
-auto CmdwinLeave * call EnableHighlighting()
+" Cmdwin autocommands are registered in the ManageVimConfig augroup below.
 
 " Toggle line numbering
 fu! ToggleNumbering()
-    if $numberingState == 0
-        let $numberingState=1
+    if g:numbering_state == 0
+        let g:numbering_state=1
         set nu foldcolumn=4
         ShowMarksToggle
     else
-        let $numberingState=0
+        let g:numbering_state=0
         set nonu foldcolumn=0
         ShowMarksToggle
     endif
 endfunc
-let $numberingState=1
+let g:numbering_state=1
 
 " Toggle fold visibility
 fu! ToggleFold()
@@ -454,10 +463,10 @@ fu! ToggleColorColumnSet()
    let w:display_color_columns = 1
 endfunc
 
-map <F11> :call ToggleColorColumns()<CR>
-map <S-F11> :call ToggleColorColumnSet()<CR>
+nnoremap <silent> <F11> :call ToggleColorColumns()<CR>
+nnoremap <silent> <S-F11> :call ToggleColorColumnSet()<CR>
 
-nnoremap <silent> ,/ :call <SID>SearchMode()<CR>
+nnoremap <silent> <leader>/ :call <SID>SearchMode()<CR>
 function s:SearchMode()
   if !exists('s:searchmode') || s:searchmode == 0
     echo 'Search next: scroll hit to middle if not on same page'
@@ -485,132 +494,123 @@ function s:MaybeMiddle()
 endfunction
 
 fu! SetBufWinEnter()
-   let w:display_color_columns = 0
-   let &colorcolumn = ""
-   let g:display_color_column_set = ""
-
-   let extensions = ['sh', 'java', 'groovy', 'gradle', 'properties']
-   let extension = expand('%:e')
-
-   if index(extensions, extension) != -1
-      if ! exists('&g:display_color_column_set')
-         let g:display_color_column_set = "58,118"
-      endif
-
-      let &colorcolumn=g:display_color_column_set
-      let w:display_color_columns = 1
-   endif
+   let w:display_color_column_set = get(w:, 'display_color_column_set', '58,118')
+   let l:extensions = ['sh', 'java', 'groovy', 'gradle', 'properties']
+   let w:display_color_columns = index(l:extensions, expand('%:e')) >= 0
+   let &l:colorcolumn = w:display_color_columns ? w:display_color_column_set : ''
 endfunc
 
-auto BufRead,BufNewFile * call SetBufWinEnter()
+" Buffer autocommand is registered in the ManageVimConfig augroup below.
 
-map ,* yiw:match MyGroup /<c-r>"/<CR>
+nnoremap <silent> <leader>* yiw:match MyGroup /<c-r>"/<CR>
 
 " Decrease fold level
-map ,< zm
+nnoremap <silent> <leader>< zm
 " Increase fold level
-map ,> zr
+nnoremap <silent> <leader>> zr
 
 " Function key mappings
 " Highlighting
-map <f1> :noh<cr>:match<cr>
-map <S-f1> :noh<cr>:match<cr>:call RefreshEggHighlighting()<cr>
-map <S-f1> :call ToggleDisplayErrors()<cr>
+nnoremap <silent> <f1> :noh<cr>:match<cr>
+nnoremap <silent> <leader>eh :noh<CR>:match<CR>:call RefreshEggHighlighting()<CR>
+nnoremap <silent> <S-f1> :call ToggleDisplayErrors()<CR>
 " Folds: f2=enabled/disabled, f3=open/close
-map <f2> :call ToggleFold()<CR>
-map <f3> zA
+nnoremap <silent> <f2> :call ToggleFold()<CR>
+nnoremap <silent> <f3> zA
 " Show version differences for a file (left: current, right: history)
 " Use numeric + and numeric - to scroll through history
-map <f4> :call ToggleVersDiff()<cr>
-map <silent> <S-f4> :call EndVersDiff()<cr>
-map <f6> :call ToggleKeywordIsPropertyState()<CR>
-map <S-f6> :call ToggleHighlightWord()<CR>
-map <f7> :cd %:h<CR>
-map <f8> :call FontBigger()<CR>:echo "Font size: " . $currentFontSize<CR>
-map <s-f8> :call FontSmaller()<CR>:echo "Font size: " . $currentFontSize<CR>
-map <f9> :call ZoomWin()<CR>
-map <f10> :call ToggleNumbering()<CR>
+nnoremap <silent> <f4> :call ToggleVersDiff()<cr>
+nnoremap <silent> <S-f4> :call EndVersDiff()<cr>
+nnoremap <silent> <f6> :call ToggleKeywordIsPropertyState()<CR>
+nnoremap <silent> <S-f6> :call ToggleHighlightWord()<CR>
+nnoremap <silent> <f7> :cd %:h<CR>
+nnoremap <silent> <f8> :call FontBigger()<CR>:echo "Font size: " . g:current_font_size<CR>
+nnoremap <silent> <s-f8> :call FontSmaller()<CR>:echo "Font size: " . g:current_font_size<CR>
+nnoremap <silent> <f9> :call ZoomWin()<CR>
+nnoremap <silent> <f10> :call ToggleNumbering()<CR>
 " Save/Restore the session
-map <f12> :mksession! $HOME/.vim/vimsession.vim<CR>
-map <s-f12> :so $HOME/.vim/vimsession.vim<CR>
+nnoremap <silent> <f12> :mksession! $HOME/.vim/vimsession.vim<CR>
+nnoremap <silent> <s-f12> :so $HOME/.vim/vimsession.vim<CR>
 
 " ===== Miscellaneous =====
 " Goto file under cursor
-map ,g <C-W><C-F>
+nnoremap <silent> <leader>g <C-W><C-F>
 
 " Search for next log entry
-map ,l /^\[[^]]*\]<CR>
+nnoremap <silent> <leader>l /^\[[^]]*\]<CR>
 
 " Search for BashG token
-map ,k /%{[^}]*}%<cr>
+nnoremap <silent> <leader>k /%{[^}]*}%<cr>
 
 " Read a template into the current buffer
-map ,T :.-1r $VIM/template/
-map ,t :r $VIM/template/
+nnoremap <silent> <leader>T :.-1r $VIM/template/
+nnoremap <silent> <leader>t :r $VIM/template/
 
 " Open Buffer Explorer: easily navigate between buffers
-map ,x :BufExplorer<CR>
+nnoremap <silent> <leader>x :BufExplorer<CR>
 
 " Yank to end of line
-map Y y$
+nnoremap <silent> Y y$
 
 " Replay macro a (Record a macro: qa ... q, then replay with <C-A>)
-map <C-A> @a
+nnoremap <silent> <C-A> @a
 
 " Move to the previous/next file
-map <C-P> :N<cr>
-map <C-N> :n<cr>
+nnoremap <silent> <C-P> :N<cr>
+nnoremap <silent> <C-N> :n<cr>
 
 " ===== Copy, Delete, and Paste =====
 " Move 'a to top
-map ,a 'az<CR>
+nnoremap <silent> <leader>a 'az<CR>
 " Mark the end of a block
-map ,e me
+nnoremap <silent> <leader>e me
 " Copy to the mark
-map ,c "ay'e
+nnoremap <silent> <leader>c "ay'e
 " Copy and Remove content to the mark
-map ,r "ay'ed'e
+nnoremap <silent> <leader>r "ay'ed'e
 " Put copied content below cursor line
-map ,p "ap
-map ,v "ap
+nnoremap <silent> <leader>p "ap
+nnoremap <silent> <leader>v "ap
 " Put coopied content above cursor line
-map ,P "aP
-map ,V "aP
+nnoremap <silent> <leader>P "aP
+nnoremap <silent> <leader>V "aP
 " Remove JSON annotations
-map ,J 1G!Gsed '/^ *\(\#\\|$\)/d'<CR>
-map ,j 1G!Gsed '/^ *\(\#\\|$\)/d'\|jq --indent 3 -r .<CR>
-map ,S 1G!Gsed '/^ *\(\#\\|$\)/d'\|jq --indent 3 -rS .<CR>
+nnoremap <silent> <leader>J 1G!Gsed '/^ *\(\#\\|$\)/d'<CR>
+nnoremap <silent> <leader>j 1G!Gsed '/^ *\(\#\\|$\)/d'\|jq --indent 3 -r .<CR>
+nnoremap <silent> <leader>S 1G!Gsed '/^ *\(\#\\|$\)/d'\|jq --indent 3 -rS .<CR>
 " Remove trailing spaces on save
 
 " Resizing Windows
-map <M-Left> <C-W><
-map <M-Up> <C-W>+
-map <M-Down> <C-W>-
-map <M-Right> <C-W>>
+nnoremap <silent> <M-Left> <C-W><
+nnoremap <silent> <M-Up> <C-W>+
+nnoremap <silent> <M-Down> <C-W>-
+nnoremap <silent> <M-Right> <C-W>>
 
 " Split the current window, opening a new window in the direction indicated
-map <C-S-Right> :vnew<CR>
-map <C-S-Left> :se nosplitright<CR>:vnew<CR>:se splitright<CR>
-map <C-S-Down> :se splitbelow<CR>:new<CR>
-map <C-S-Up> :se nosplitbelow<CR>:new<CR>
+nnoremap <silent> <C-S-Right> :vnew<CR>
+nnoremap <silent> <C-S-Left> :se nosplitright<CR>:vnew<CR>:se splitright<CR>
+nnoremap <silent> <C-S-Down> :se splitbelow<CR>:new<CR>
+nnoremap <silent> <C-S-Up> :se nosplitbelow<CR>:new<CR>
 
 " Move to a window in the direction indicated
-map <C-Right> <c-w>l
-map <C-Left> <c-w>h
-map <C-Up> <c-w>k
-map <C-Down> <c-w>j
+nnoremap <silent> <C-Right> <c-w>l
+nnoremap <silent> <C-Left> <c-w>h
+nnoremap <silent> <C-Up> <c-w>k
+nnoremap <silent> <C-Down> <c-w>j
 
 " Rotate windows to the right
-map <C-M-Right> <c-w>r
+nnoremap <silent> <C-M-Right> <c-w>r
 
 " Update current buffer with any changes that are on disk, but not in the buffer yet
-map <C-U> M:e!<cr>
+" Explicit confirmation; keep native <C-U> for scrolling.
+nnoremap <silent> <leader>U :confirm edit<CR>
 
 " Terminate vim without writing
-map <C-T> :qa!<cr>
+" Explicit confirmation; keep native <C-T> for tags.
+nnoremap <silent> <leader>Q :confirm qall<CR>
 
 " Terminate vim, but save all files first
-map <C-M-T> :xa!<cr>
+nnoremap <silent> <C-M-T> :xa!<cr>
 
 " Show the vim syntax type under the cursor
 function! SynStack()
@@ -619,34 +619,34 @@ function! SynStack()
     endif
     echo map(synstack(line('.'), col('.')), "synIDattr(v:val, 'name')")
 endfunc
-map <s-f10> :call SynStack()<CR>
+nnoremap <silent> <s-f10> :call SynStack()<CR>
 
 " Vim diffing
-let $diffWhiteState=1
+let g:diff_white_state=1
 fu! ToggleDiffWhite()
-    if $diffWhiteState == 0
+    if g:diff_white_state == 0
         set diffopt-=iwhite
-        let $diffWhiteState=1
+        let g:diff_white_state=1
     else
         set diffopt+=iwhite
-        let $diffWhiteState=0
+        let g:diff_white_state=0
     endif
 endfunc
 
 fu! ToggleVersDiff()
-   if $versdiffState == 0
-      let $versdiffState=1
-      nmap <silent> - :VersDiff -<cr>
-      nmap <silent> + :VersDiff +<cr>
-      nmap <silent> <kMinus> :VersDiff -<cr>
-      nmap <silent> <kPlus> :VersDiff +<cr>
+   if g:versdiff_state == 0
+      let g:versdiff_state=1
+      nnoremap <silent> - :VersDiff -<cr>
+      nnoremap <silent> + :VersDiff +<cr>
+      nnoremap <silent> <kMinus> :VersDiff -<cr>
+      nnoremap <silent> <kPlus> :VersDiff +<cr>
       VersDiff -
    else
-      let $versdiffState=0
-      unmap <silent> -
-      unmap <silent> +
-      unmap <silent> <kMinus>
-      unmap <silent> <kPlus>
+      let g:versdiff_state=0
+      silent! nunmap -
+      silent! nunmap +
+      silent! nunmap <kMinus>
+      silent! nunmap <kPlus>
       VersDiff -c
    endif
 endfunc
@@ -654,7 +654,7 @@ fu! EndVersDiff()
    Purge 0
    w!
 endfunc
-let $versdiffState=0
+let g:versdiff_state=0
 
 fu! DiffSetup()
     syntax off
@@ -662,22 +662,24 @@ fu! DiffSetup()
 
     set diffopt=filler,context:9999
     set cursorbind scrollbind cursorline
-    map <f5> :diffupdate<CR>
-    map <right> :diffget<CR>
-    map <left> :diffput<CR>
-    map <down> ]cz.<c-w><c-w><c-w><c-w>
-    map <up> [cz.<c-w><c-w><c-w><c-w>
+    nnoremap <buffer> <silent> <f5> :diffupdate<CR>
+    nnoremap <buffer> <silent> <right> :diffget<CR>
+    nnoremap <buffer> <silent> <left> :diffput<CR>
+    nnoremap <buffer> <silent> <down> ]cz.<c-w><c-w><c-w><c-w>
+    nnoremap <buffer> <silent> <up> [cz.<c-w><c-w><c-w><c-w>
 
-    map <s-down> do|                                     " pull other change into current buffer
-    map <s-up> dp|                                       " push current change into other buffer
+    " Pull/push the current diff hunk.
+    nnoremap <buffer> <silent> <s-down> do
+    nnoremap <buffer> <silent> <s-up> dp
 
-    map <m-s-down> :%diffget<CR>|                        " pull all other changes into current buffer
-    map <m-s-up> :%diffput<CR>|                          " pull all current changes into other buffer
-    map <m-down> <c-w>wyy<c-w>wPjddk
+    " Pull/push all changes.
+    nnoremap <buffer> <silent> <m-s-down> :%diffget<CR>
+    nnoremap <buffer> <silent> <m-s-up> :%diffput<CR>
+    nnoremap <buffer> <silent> <m-down> <c-w>wyy<c-w>wPjddk
 
-    map u :u<cr>:dif<cr>
-    map U :red<cr>:dif<cr>
-    let $currentFontSize=8
+    nnoremap <buffer> <silent> u :u<cr>:dif<cr>
+    nnoremap <buffer> <silent> U :red<cr>:dif<cr>
+    let g:current_font_size=8
     call FontBigger()
     hi clear CursorLine
     hi CursorLine cterm=underline
@@ -695,14 +697,14 @@ fu! DiffThis()
     " Move back to the left-most window
     exe "normal \<C-w>b1G]c"
 endfunc
-map ,d :call DiffThis()<CR>
+nnoremap <silent> <leader>d :call DiffThis()<CR>
 cnoreabbrev D DirDiff
-map ,i :call ToggleDiffWhite()<CR>
-map ,n /\(\[\(\n\s*#.*\)*\n\s*\]\\|null\\|""\)<CR>
-map ,B ^i# <ESC>$a #<ESC>O#<ESC>:se nowrap<CR>125a#<ESC>jhlklDyyjp:se wrap<CR>
+nnoremap <silent> <leader>i :call ToggleDiffWhite()<CR>
+nnoremap <silent> <leader>n /\(\[\(\n\s*#.*\)*\n\s*\]\\|null\\|""\)<CR>
+nnoremap <silent> <leader>B ^i# <ESC>$a #<ESC>O#<ESC>:se nowrap<CR>125a#<ESC>jhlklDyyjp:se wrap<CR>
 
 let @R='^\(\(\s*\(#.*\|\s*echo.*\)\)\@!..*\)$'
-map ,R /<C-R>R<CR>
+nnoremap <silent> <leader>R /<C-R>R<CR>
 
 fu! FoldBashLib()
    let save_view = winsaveview()
@@ -719,21 +721,26 @@ fu! FoldBashLib()
 
    call winrestview(save_view)
 endfunc
-noremap! <silent> :call FoldBashLib()
- :call FoldBashLib()<CR>
+nnoremap <silent> <leader>fb :call FoldBashLib()<CR>
 
-auto BufNewFile,BufRead *.conf set filetype=conf
-auto BufNewFile,BufRead * if &syntax == '' | set syntax=sh | endif
-auto VimEnter * if &diff | let $wrapState=0 | call ToggleWrap() | endif
+" Centralize autocommands to avoid duplicates when this file is re-sourced.
+augroup ManageVimConfig
+   autocmd!
+   autocmd BufWritePre * call RemoveTrailingSpaces()
+   autocmd CmdwinEnter * call DisableHighlighting()
+   autocmd CmdwinLeave * call EnableHighlighting()
+   autocmd BufRead,BufNewFile * call SetBufWinEnter()
+   autocmd BufRead,BufNewFile *.conf setfiletype conf
+   " Do not label unknown files as shell scripts indiscriminately.
+   autocmd BufWinEnter * if !&diff | call RefreshEggHighlighting() | endif
+   autocmd BufRead,BufNewFile *.sh silent! call FoldBashLib()
+   autocmd BufEnter * let &titlestring = expand('%:t')
+   autocmd VimEnter * if &diff | let g:wrap_state=0 | set nowrap | endif
+augroup END
 
 if &diff
-    call DiffSetup()
-else
-   auto BufNewFile,BufRead * call RefreshEggHighlighting()
-   auto BufNewFile,BufRead *.sh silent! call FoldBashLib()
+   call DiffSetup()
 endif
-
-auto BufEnter * let &titlestring = expand("%:t")
 
 " DO NOT MAKE CHANGES TO THIS FILE =================================
 " Place local changes in $HOME/.vim/plugin/rc.vim
