@@ -1,5 +1,6 @@
 #!/bin/bash
-# Provision one non-login collaborative account and an ACL-enabled shared home.
+# Provision a non-login collaborative account and an ACL-enabled shared home.
+# Assign a GID automatically unless -i/--gid is provided.
 set -euo pipefail
 
 usage()
@@ -14,7 +15,7 @@ main()
       return 1
    fi
 
-   local Options GroupName='' GroupID=2000
+   local Options GroupName='' GroupID=''
    Options=$(getopt -o 'g:i:' -l 'group:,gid:' -n "$0" -- "$@") || {
       usage
       return 1
@@ -33,48 +34,56 @@ main()
       echo 'Error: supply a valid lowercase group name with -g.' >&2
       return 1
    fi
-   if [[ ! $GroupID =~ ^[0-9]+$ ]] || (( 10#$GroupID < 1 )); then
-      echo 'Error: GID must be a positive integer.' >&2
-      return 1
+   if [[ -n $GroupID ]]; then
+      if [[ ! $GroupID =~ ^[0-9]+$ ]] || (( 10#$GroupID < 1 )); then
+         echo 'Error: GID must be a positive integer.' >&2
+         return 1
+      fi
+      GroupID=$(( 10#$GroupID ))
    fi
 
-   # Don't silently reuse an existing GID assigned to another group.
-   local existing_group existing_gid
+   # Reject conflicting GIDs, but allow a compatible existing group.
+   local ExistingGroup ExistingGID
    if getent group "$GroupName" >/dev/null; then
-      existing_gid=$(getent group "$GroupName" | cut -d: -f3)
-      if [[ $existing_gid != "$GroupID" ]]; then
-         echo "Error: group $GroupName already has GID $existing_gid (expected $GroupID)." >&2
+      ExistingGID=$(getent group "$GroupName" | cut -d: -f3)
+      if [[ -n $GroupID && $ExistingGID != "$GroupID" ]]; then
+         echo "Error: $GroupName has GID $ExistingGID, not $GroupID." >&2
          return 1
       fi
    else
-      existing_group=$(getent group "$GroupID" | cut -d: -f1 || true)
-      if [[ -n $existing_group ]]; then
-         echo "Error: GID $GroupID already belongs to group $existing_group." >&2
-         return 1
+      if [[ -n $GroupID ]]; then
+         ExistingGroup=$(getent group "$GroupID" | cut -d: -f1 || true)
+         if [[ -n $ExistingGroup ]]; then
+            echo "Error: GID $GroupID is already owned by $ExistingGroup." >&2
+            return 1
+         fi
+         groupadd -g "$GroupID" "$GroupName"
+      else
+         groupadd "$GroupName"
       fi
-      groupadd -g "$GroupID" "$GroupName"
    fi
+   GroupID=$(getent group "$GroupName" | cut -d: -f3)
 
-   local home=/home/$GroupName
+   local Home=/home/$GroupName
    if getent passwd "$GroupName" >/dev/null; then
-      local entry account_home primary_gid account_shell
-      entry=$(getent passwd "$GroupName")
-      IFS=: read -r _ _ _ primary_gid _ account_home account_shell <<< "$entry"
-      if [[ $account_home != "$home" || $primary_gid != "$GroupID" || $account_shell != /usr/sbin/nologin ]]; then
+      local Entry AccountHome PrimaryGID AccountShell
+      Entry=$(getent passwd "$GroupName")
+      IFS=: read -r _ _ _ PrimaryGID _ AccountHome AccountShell <<< "$Entry"
+      if [[ $AccountHome != "$Home" || $PrimaryGID != "$GroupID" || $AccountShell != /usr/sbin/nologin ]]; then
          echo "Error: existing account $GroupName does not match the shared-account configuration." >&2
          return 1
       fi
    else
-      useradd -M -d "$home" -g "$GroupName" \
+      useradd -M -d "$Home" -g "$GroupName" \
          -s /usr/sbin/nologin "$GroupName"
    fi
 
-   install -d -o "$GroupName" -g "$GroupName" -m 2770 "$home"
-   setfacl -m 'u::rwx,g::rwx,m::rwx,o::---' "$home"
-   setfacl -d -m 'u::rwx,g::rwx,m::rwx,o::---' "$home"
-   chmod g+s "$home"
+   install -d -o "$GroupName" -g "$GroupName" -m 2770 "$Home"
+   setfacl -m 'u::rwx,g::rwx,m::rwx,o::---' "$Home"
+   setfacl -d -m 'u::rwx,g::rwx,m::rwx,o::---' "$Home"
+   chmod g+s "$Home"
 
-   getfacl "$home"
+   getfacl "$Home"
    echo "Collaborative account $GroupName (GID $GroupID) ready."
 }
 

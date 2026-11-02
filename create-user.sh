@@ -1,5 +1,6 @@
 #!/bin/bash
-# Provision one private user who collaborates through a supplementary group.
+# Provision a private user in one collaborative group and the docker group.
+# Docker access on this VM is a trusted-user policy and is root-equivalent.
 set -euo pipefail
 
 usage()
@@ -46,14 +47,19 @@ main()
       echo "Error: create shared group $GroupName first." >&2
       return 1
    fi
+   if ! getent group docker >/dev/null; then
+      echo 'Error: Docker group does not exist; run vm-bootstrap.sh first.' >&2
+      return 1
+   fi
    if ! command -v ssh-keygen >/dev/null; then
       echo 'Error: ssh-keygen is required to validate the public key.' >&2
       return 1
    fi
 
-   # Validate the public key before creating or changing an account.
+   # Validate the key before changing the account.
+   # EXIT traps run after main() returns, so keep the pathname global.
    USER_KEYFILE=$(mktemp)
-   trap 'rm -f "$USER_KEYFILE"' EXIT
+   trap 'rm -f -- "$USER_KEYFILE"' EXIT
    printf '%s\n' "$SSHKey" > "$USER_KEYFILE"
    chmod 0600 "$USER_KEYFILE"
    if ! ssh-keygen -lf "$USER_KEYFILE" >/dev/null 2>&1; then
@@ -61,26 +67,27 @@ main()
       return 1
    fi
 
-   local home=/home/$UserName
+   local Home=/home/$UserName
    if getent passwd "$UserName" >/dev/null; then
-      local entry account_home primary_group
-      entry=$(getent passwd "$UserName")
-      IFS=: read -r _ _ _ _ _ account_home _ <<< "$entry"
-      primary_group=$(id -gn "$UserName")
-      if [[ $account_home != "$home" || $primary_group != "$UserName" ]]; then
+      local Entry AccountHome PrimaryGroup
+      Entry=$(getent passwd "$UserName")
+      IFS=: read -r _ _ _ _ _ AccountHome _ <<< "$Entry"
+      PrimaryGroup=$(id -gn "$UserName")
+      if [[ $AccountHome != "$Home" || $PrimaryGroup != "$UserName" ]]; then
          echo "Error: existing account $UserName has an unexpected home or primary group." >&2
          return 1
       fi
-      usermod -aG "$GroupName" -s /bin/zsh "$UserName"
+      usermod -aG "$GroupName,docker" -s /bin/zsh "$UserName"
    else
-      useradd -m -U -G "$GroupName" -s /bin/zsh "$UserName"
+      # -U creates the private primary group named after the user.
+      useradd -m -U -G "$GroupName,docker" -s /bin/zsh "$UserName"
    fi
 
-   chmod 0700 "$home"
-   install -d -o "$UserName" -g "$UserName" -m 0700 "$home/.ssh"
-   # The declared key is authoritative; rerunning replaces authorized_keys.
+   chmod 0700 "$Home"
+   install -d -o "$UserName" -g "$UserName" -m 0700 "$Home/.ssh"
+   # Explicitly supplied key is authoritative; reruns replace authorized_keys.
    install -o "$UserName" -g "$UserName" -m 0600 \
-      "$USER_KEYFILE" "$home/.ssh/authorized_keys"
+      "$USER_KEYFILE" "$Home/.ssh/authorized_keys"
 
    id "$UserName"
    echo "User $UserName provisioned successfully."
