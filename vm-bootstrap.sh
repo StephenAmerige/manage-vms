@@ -46,7 +46,30 @@ main()
    apt-get upgrade -y
    apt-get install -y \
       acl ca-certificates curl git gnupg lsb-release \
-      openssh-client sudo unzip vim yq zip zsh
+      openssh-client plocate sudo unzip vim yq zip zsh
+
+   # LOGIN HISTORY: wtmpdb is available on Ubuntu 25.10 and later;
+   # Ubuntu 24.04 retains the traditional last/wtmp implementation.
+   if dpkg --compare-versions "$VERSION_ID" ge 25.10; then
+      apt-get install -y wtmpdb libpam-wtmpdb
+   fi
+
+   # PLOCATE: its package initializes the database and enables the timer.
+   # Override the packaged daily schedule to run at 02:00 local time.
+   # Disable catch-up runs to avoid indexing during the day after downtime.
+   install -d -o root -g root -m 0755 \
+      /etc/systemd/system/plocate-updatedb.timer.d
+   cat > /etc/systemd/system/plocate-updatedb.timer.d/override.conf <<'PLOCATE_TIMER'
+[Timer]
+OnCalendar=
+OnCalendar=*-*-* 02:00:00
+RandomizedDelaySec=0
+AccuracySec=1min
+Persistent=false
+PLOCATE_TIMER
+   systemctl daemon-reload
+   systemctl enable plocate-updatedb.timer
+   systemctl restart plocate-updatedb.timer
 
    # DOCKER: configure the official Ubuntu APT repository.
    install -d -m 0755 /etc/apt/keyrings

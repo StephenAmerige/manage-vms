@@ -601,13 +601,11 @@ nnoremap <silent> <C-Down> <c-w>j
 " Rotate windows to the right
 nnoremap <silent> <C-M-Right> <c-w>r
 
-" Update current buffer with any changes that are on disk, but not in the buffer yet
-" Explicit confirmation; keep native <C-U> for scrolling.
-nnoremap <silent> <leader>U :confirm edit<CR>
+" Discard buffer changes and reload the current file from disk.
+nnoremap <silent> <C-U> :edit!<CR>
 
-" Terminate vim without writing
-" Explicit confirmation; keep native <C-T> for tags.
-nnoremap <silent> <leader>Q :confirm qall<CR>
+" Quit Vim completely, discarding unsaved changes without confirmation.
+nnoremap <silent> <C-T> :qall!<CR>
 
 " Terminate vim, but save all files first
 nnoremap <silent> <C-M-T> :xa!<cr>

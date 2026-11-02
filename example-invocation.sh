@@ -25,6 +25,12 @@ declare -a SudoUsers=(
 # INSTANCE CONFIGURATION END #
 ##############################
 
+# Specify the Timezone
+TimeZone=
+##############################
+# INSTANCE CONFIGURATION END #
+##############################
+
 # FETCH THE REUSABLE PROVISIONING SCRIPTS
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
@@ -32,6 +38,12 @@ apt-get install -y git ca-certificates
 
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
+
+# CONFIGURE SYSTEM TIMEZONE
+if [[ -n $TimeZone ]]; then
+   echo "=== Setting system timezone: $TimeZone ==="
+   timedatectl set-timezone "$TimeZone"
+fi
 
 git clone https://github.com/StephenAmerige/manage-vms.git "$TMP/manage-vms"
 cd "$TMP/manage-vms"
