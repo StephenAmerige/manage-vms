@@ -122,7 +122,7 @@ TMP=$(mktemp -d)
 trap 'rm -rf -- "$TMP"' EXIT
 
 git clone https://github.com/StephenAmerige/ubuntu-host-bootstrap.git "$TMP/ubuntu-host-bootstrap"
-source "$TMP/manage-vms/provision-vm.sh"
+source "$TMP/ubuntu-host-bootstrap/provision-vm.sh"
 ```
 
 Sourcing intentionally shares the same Bash variables and associative/indexed arrays with the orchestrator. `TMP` provides a secure temporary checkout and a place to prepare sudoers rules; the caller's `EXIT` trap removes it afterward. The entrypoint uses `set -euo pipefail` to stop on errors.
@@ -167,7 +167,7 @@ The same entrypoint can also be run manually on an Ubuntu VM created outside Ope
 3. When `TimeZone` is specified, the orchestrator sets it **before** the bootstrap configures nightly indexing.
 4. The orchestrator invokes `vm-bootstrap.sh` to install OS packages, Docker, shell/editor defaults, and administrative helpers.
 5. It calls the installed `create-shared-group.sh`, passing the explicit `GroupID` when given, and calls `create-user.sh` for each `UserKey` entry. All users join the specified collaborative group and `docker`.
-6. It validates and installs `/etc/sudoers.d/90-manage-vms` for the explicitly named `SudoUsers`, leaving `/etc/sudoers` unchanged.
+6. It validates and installs `/etc/sudoers.d/90-ubuntu-host-bootstrap` for the explicitly named `SudoUsers`, leaving `/etc/sudoers` unchanged.
 7. It logs completion and, if enabled, schedules a reboot **one minute later** using `shutdown -r +1` so the calling script can exit and its output can be recorded. Cancel a pending reboot with `sudo shutdown -c`.
 
 The temporary clone is removed when the invocation exits. The two installed helpers remain available for future administration. The orchestrator runs during initial setup; it is **not** installed as a long-term administration command.
@@ -274,7 +274,7 @@ Different collaborative groups can coexist on one VM; users need not share a col
 `example-invocation.sh` contains a `SudoUsers` array. Every name in this list must also be in the instance's `UserKey` array. After creating users, the sourced `provision-vm.sh` generates a root-owned file with mode `0440` at:
 
 ```text
-/etc/sudoers.d/90-manage-vms
+/etc/sudoers.d/90-ubuntu-host-bootstrap
 ```
 
 It validates the proposed rules with `visudo`, installs the file, validates the sudo policy again, and adds listed users to the `sudo` group. A typical rule is:
@@ -403,7 +403,7 @@ Log in as a provisioned user and check `docker ps` (without sudo). For a user in
 | Group creation fails | Inspect `getent group GROUP` and `getent group GID` for name/GID collisions or a conflicting existing account. |
 | SSH login fails | Provisioning completion, sshd, firewall/network access, username, matching private key and `authorized_keys` ownership/mode. |
 | `docker ps` returns permission denied | Verify `id`, `getent group docker`, socket owner/mode and a **new login session** after membership changes. Do not `chmod a+rw` the socket. |
-| Passwordless sudo fails | Verify `SudoUsers`, `sudo -l -U USER`, `/etc/sudoers.d/90-manage-vms` permissions and `sudo visudo -c`. |
+| Passwordless sudo fails | Verify `SudoUsers`, `sudo -l -U USER`, `/etc/sudoers.d/90-ubuntu-host-bootstrap` permissions and `sudo visudo -c`. |
 | zsh produces locale warnings | `.zshrc` selects `en_US.UTF-8`; check `locale -a` and generate/install the locale if absent. |
 | Shared file not group-writable | Inspect `getfacl` of the file and directory, ACL masks and restrictive modes applied by the application. |
 | Reboot unexpectedly pending | Check the example's `RebootAfterProvisioning` value and `shutdown` schedule; cancel with `sudo shutdown -c` if appropriate. |

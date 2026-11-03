@@ -39,4 +39,4 @@ TMP=$(mktemp -d)
 trap 'rm -rf -- "$TMP"' EXIT
 
 git clone https://github.com/StephenAmerige/ubuntu-host-bootstrap.git "$TMP/ubuntu-host-bootstrap"
-source "$TMP/manage-vms/provision-vm.sh"
+source "$TMP/ubuntu-host-bootstrap/provision-vm.sh"

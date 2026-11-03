@@ -75,7 +75,7 @@ provision_vm()
    # PASSWORDLESS SUDO FOR DESIGNATED ADMINISTRATORS.
    # Leave the stock /etc/sudoers and initial ubuntu account untouched.
    if (( ${#SudoUsers[@]} > 0 )); then
-      local SudoersTemp="$TMP/90-manage-vms"
+      local SudoersTemp="$TMP/90-ubuntu-host-bootstrap"
       : > "$SudoersTemp"
 
       for UserName in "${SudoUsers[@]}"; do
@@ -86,7 +86,7 @@ provision_vm()
       chmod 0440 "$SudoersTemp"
       visudo -cf "$SudoersTemp"
       install -o root -g root -m 0440 \
-         "$SudoersTemp" /etc/sudoers.d/90-manage-vms
+         "$SudoersTemp" /etc/sudoers.d/90-ubuntu-host-bootstrap
       visudo -c
 
       for UserName in "${SudoUsers[@]}"; do
