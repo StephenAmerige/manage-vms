@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: MIT
 # Orchestrate Ubuntu host provisioning (VM or physical system).
 # Source this script from example-invocation.sh to access the caller's
 # configuration variables and Bash arrays without exporting them.

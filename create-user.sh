@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: MIT
 # Provision a private user in one collaborative group and the docker group.
 # Docker access on this VM is a trusted-user policy and is root-equivalent.
 set -euo pipefail

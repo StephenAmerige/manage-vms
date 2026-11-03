@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: MIT
 # Ubuntu host provisioning: run with sudo bash or use as cloud-init Bash user data.
 # Change only the marked configuration section; use complete SSH public keys.
 # The repository must be anonymously cloneable from the target host.
@@ -37,5 +38,5 @@ apt-get install -y git ca-certificates
 TMP=$(mktemp -d)
 trap 'rm -rf -- "$TMP"' EXIT
 
-git clone https://github.com/StephenAmerige/manage-vms.git "$TMP/manage-vms"
+git clone https://github.com/StephenAmerige/ubuntu-host-bootstrap.git "$TMP/ubuntu-host-bootstrap"
 source "$TMP/manage-vms/provision-vm.sh"

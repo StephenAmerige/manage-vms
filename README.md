@@ -1,4 +1,4 @@
-# manage-vms
+# ubuntu-host-bootstrap
 
 Reproducible Ubuntu system provisioning and ongoing account administration for **virtual machines and physical hosts**. Run the same configuration manually or as a cloud-init user-data script on platforms that support it.
 
@@ -7,6 +7,11 @@ Customize the settings in `example-invocation.sh` and run it as root on an Ubunt
 > **Scope:** This repository initializes an Ubuntu system and provides a limited set of account-management tools. It is **not** a continuous configuration-management service, backup system, user-deletion workflow, or guarantee of bit-for-bit identical systems. It is best suited to fresh installations; see the cautions for already-used hosts below.
 
 > **Trust boundary:** This configuration intentionally grants provisioned users access to the **rootful Docker daemon** through the `docker` group. Such access is effectively **root-equivalent**. Unix primary groups and private home-directory permissions organize collaboration but do **not** provide a security boundary between mutually untrusted Docker users. Use separate VMs or appropriately configured rootless container engines when stronger isolation is required.
+
+**License:** Original project code is offered under the [MIT License](LICENSE).
+Bundled third-party Vim components retain their own terms (see
+[third-party notices](THIRD_PARTY_NOTICES.md)); one colorscheme still has an
+unverified redistribution license as described there.
 
 ## Features
 
@@ -24,7 +29,7 @@ Customize the settings in `example-invocation.sh` and run it as root on an Ubunt
 ## Repository layout
 
 ```text
-manage-vms/
+ubuntu-host-bootstrap/
 ├── vm-bootstrap.sh             # Ubuntu, Docker, zsh, Vim, initial accounts and helpers
 ├── provision-vm.sh             # Sourced provisioning orchestration logic
 ├── create-shared-group.sh      # Collaborative group, non-login account and ACLs
@@ -114,7 +119,7 @@ apt-get install -y git ca-certificates
 TMP=$(mktemp -d)
 trap 'rm -rf -- "$TMP"' EXIT
 
-git clone https://github.com/StephenAmerige/manage-vms.git "$TMP/manage-vms"
+git clone https://github.com/StephenAmerige/ubuntu-host-bootstrap.git "$TMP/ubuntu-host-bootstrap"
 source "$TMP/manage-vms/provision-vm.sh"
 ```
 
@@ -170,7 +175,7 @@ The temporary clone is removed when the invocation exits. The two installed help
 The example currently clones the repository's default branch at execution time. Its `git rev-parse HEAD` log line records the revision used. For repeatable deployments, consider checking out a reviewed **commit SHA or tag** immediately after the clone and before sourcing the orchestrator:
 
 ```bash
-git -C "$TMP/manage-vms" checkout --detach REVIEWED_COMMIT_SHA
+git -C "$TMP/ubuntu-host-bootstrap" checkout --detach REVIEWED_COMMIT_SHA
 ```
 
 Replace `REVIEWED_COMMIT_SHA` with a real commit. A pinned Git revision controls the provisioning code but not the changing contents of Ubuntu's and Docker's package repositories.
@@ -413,6 +418,32 @@ Log in as a provisioned user and check `docker ps` (without sudo). For a user in
 - **Protect existing data.** Rebuilding a machine or VM does not back up or migrate users' files. Running the bootstrap on an existing host can replace shell/editor settings and update operating-system packages.
 - **Retain applicable third-party licenses** for bundled Vim plugins, colorschemes and other redistributed support files.
 
+## License and attribution
+
+The original provisioning scripts, project-specific configuration, and original
+documentation are made available under the **MIT License**; see [`LICENSE`](LICENSE).
+The license permits personal, research, commercial, and proprietary use with
+retention of the copyright and permission notice.
+
+Files bundled from other authors are **not relicensed** by this project. See
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for the inventory and original
+attributions; complete texts of the applicable GNU GPLv2 and Vim License are
+included in [`licenses/`](licenses/). The shipped third-party Vim components
+include both permissively licensed and GPL-licensed material. The
+`summerfruit256.vim` colorscheme's redistribution terms remain unresolved,
+so the notices identify this explicitly rather than claiming the entire
+repository is uniformly MIT licensed.
+
+### Canonical upstream and organization copies
+
+The canonical development repository is
+[`StephenAmerige/ubuntu-host-bootstrap`](https://github.com/StephenAmerige/ubuntu-host-bootstrap).
+An organization can maintain a separate copy using its own Git remote,
+while retaining attribution and applicable licenses. An independent copy
+need not be a GitHub-recognized fork, and changes in that copy do not
+synchronize back automatically. Propose general improvements upstream;
+keep site-specific configuration in the corresponding downstream repository.
+
 ## Maintaining the repository
 
 The canonical configuration lives under `files/zsh/` and `files/vim/`. Make shared changes there and commit them. New hosts using that revision inherit the changes; existing home directories do not receive automatic updates.
@@ -431,4 +462,4 @@ done
 
 This catches Bash syntax errors but does not replace an integration test on a fresh Ubuntu host. Test both manual execution and any unattended deployment mechanism you intend to support. Review `git diff`, commit changes conventionally, and record the Git revision used.
 
-Repository: <https://github.com/StephenAmerige/manage-vms>
+Repository: <https://github.com/StephenAmerige/ubuntu-host-bootstrap>

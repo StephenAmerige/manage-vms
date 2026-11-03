@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: MIT
 # Provision a non-login collaborative account and an ACL-enabled shared home.
 # Assign a GID automatically unless -i/--gid is provided.
 set -euo pipefail

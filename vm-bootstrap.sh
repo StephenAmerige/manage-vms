@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: MIT
 # Initialize an Ubuntu host with Docker, zsh, Vim, and administration helpers.
 # Custom shell and editor configuration is bundled with this repository.
 set -euo pipefail
