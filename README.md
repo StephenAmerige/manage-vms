@@ -1,5 +1,7 @@
 # ubuntu-host-bootstrap
 
+![Ubuntu Host Bootstrap — Ready-to-Use Toolkit](docs/images/ubuntu-host-bootstrap-toolkit.png)
+
 Reproducible Ubuntu system provisioning and ongoing account administration for **virtual machines and physical hosts**. Run the same configuration manually or as a cloud-init user-data script on platforms that support it.
 
 Customize the settings in `example-invocation.sh` and run it as root on an Ubuntu system, or pass it as a Bash user-data script during automated provisioning. The small entrypoint clones this repository and **sources `provision-vm.sh`**, which coordinates OS setup, collaborative groups, user accounts, sudo policy, and the optional reboot. Two administrative helpers remain installed in `/usr/local/bin` for later user and group management.

@@ -1,0 +1,65 @@
+# -----------------------------------------------------------------------------
+# Text files and line endings
+# -----------------------------------------------------------------------------
+# Automatically distinguish text from binary. Normalize text to LF in Git.
+* text=auto
+
+# Keep scripts and project documentation LF-terminated on every platform.
+*.sh           text eol=lf
+*.bash         text eol=lf
+*.zsh          text eol=lf
+*.vim          text eol=lf
+*.rb           text eol=lf
+*.md           text eol=lf
+*.txt          text eol=lf
+*.json         text eol=lf
+*.yml          text eol=lf
+*.yaml         text eol=lf
+*.toml         text eol=lf
+*.ini          text eol=lf
+*.conf         text eol=lf
+*.service      text eol=lf
+*.timer        text eol=lf
+*.svg          text eol=lf
+*.patch        text eol=lf
+*.diff         text eol=lf
+
+# Important extensionless files and shell/editor dotfiles.
+.gitattributes text eol=lf
+.gitignore     text eol=lf
+.editorconfig  text eol=lf
+LICENSE        text eol=lf
+.vimrc         text eol=lf
+.gvimrc        text eol=lf
+.zshrc         text eol=lf
+.zshenv        text eol=lf
+files/vim/runtime/template/* text eol=lf
+
+# -----------------------------------------------------------------------------
+# Binary assets: no line-ending conversion, text diffs, or text merges
+# -----------------------------------------------------------------------------
+*.png          binary
+*.jpg          binary
+*.jpeg         binary
+*.gif          binary
+*.webp         binary
+*.ico          binary
+*.pdf          binary
+*.zip          binary
+*.gz           binary
+*.tgz          binary
+*.xz           binary
+*.7z           binary
+
+# -----------------------------------------------------------------------------
+# GitHub language statistics
+# -----------------------------------------------------------------------------
+# Bundled third-party Vim plugins and related files are vendored code.
+# Excluding them keeps GitHub's language summary focused on project code.
+# Leave first-party Vim configuration (such as .vimrc and filetype.vim) counted.
+files/vim/runtime/vimfiles/autoload/** linguist-vendored
+files/vim/runtime/vimfiles/colors/**   linguist-vendored
+files/vim/runtime/vimfiles/doc/**      linguist-vendored
+files/vim/runtime/vimfiles/lib/**      linguist-vendored
+files/vim/runtime/vimfiles/plugin/**   linguist-vendored
+files/vim/runtime/vimfiles/syntax/**   linguist-vendored
