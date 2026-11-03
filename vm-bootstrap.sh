@@ -1,5 +1,5 @@
 #!/bin/bash
-# Initialize an Ubuntu VM with Docker, zsh, Vim, and administration helpers.
+# Initialize an Ubuntu host with Docker, zsh, Vim, and administration helpers.
 # Custom shell and editor configuration is bundled with this repository.
 set -euo pipefail
 
@@ -126,8 +126,8 @@ DOCKER_SOURCES
    ln -sfn .vimrc /root/.gvimrc
    usermod -s /bin/zsh root
 
-   # INITIAL CLOUD ACCOUNT: cloud-init created 'ubuntu' before /etc/skel
-   # was populated. Configure it explicitly, preserving its SSH keys.
+   # EXISTING UBUNTU ACCOUNT: some images precreate 'ubuntu' before /etc/skel
+   # is populated. Configure it if present, preserving its SSH keys.
    local InitialUser=ubuntu InitialHome InitialGroup
    if getent passwd "$InitialUser" >/dev/null; then
       InitialHome=$(getent passwd "$InitialUser" | cut -d: -f6)

@@ -1,11 +1,11 @@
 #!/bin/bash
-# Paste the entire file into OpenStack > Launch Instance > Configuration.
-# Replace the sample SSH public keys with complete, real public keys.
-# The repository must be anonymously cloneable from the VM.
+# Ubuntu host provisioning: run with sudo bash or use as cloud-init Bash user data.
+# Change only the marked configuration section; use complete SSH public keys.
+# The repository must be anonymously cloneable from the target host.
 set -euo pipefail
 
 ################################
-# INSTANCE CONFIGURATION BEGIN #
+#   HOST CONFIGURATION BEGIN   #
 #    EDIT THIS SECTION ONLY    #
 ################################
 Group='collab'
@@ -26,7 +26,7 @@ declare -a SudoUsers=(
 # Empty means retain the cloud image's default timezone.
 TimeZone=''
 ##############################
-# INSTANCE CONFIGURATION END #
+# HOST CONFIGURATION END     #
 ##############################
 
 # FETCH AND RUN THE REPOSITORY-MANAGED PROVISIONING LOGIC

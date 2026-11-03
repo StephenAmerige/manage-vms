@@ -1,35 +1,35 @@
 # manage-vms
 
-Reproducible first-boot provisioning and lightweight ongoing account administration for Ubuntu virtual machines launched through **OpenStack Horizon**.
+Reproducible Ubuntu system provisioning and ongoing account administration for **virtual machines and physical hosts**. Run the same configuration manually or as a cloud-init user-data script on platforms that support it.
 
-The usual workflow is to edit only the instance-specific settings in `example-invocation.sh`, paste it into **Launch Instance > Configuration**, and launch the VM. This minimal user-data script clones the repository and **sources `provision-vm.sh`**, which orchestrates bootstrap, collaborative group creation, user accounts, sudo policy, and the optional reboot. After installation, two administrative helpers remain available in `/usr/local/bin` for adding users and groups without repeating the bootstrap.
+Customize the settings in `example-invocation.sh` and run it as root on an Ubuntu system, or pass it as a Bash user-data script during automated provisioning. The small entrypoint clones this repository and **sources `provision-vm.sh`**, which coordinates OS setup, collaborative groups, user accounts, sudo policy, and the optional reboot. Two administrative helpers remain installed in `/usr/local/bin` for later user and group management.
 
-> **Scope:** This repository defines a VM's initial configuration and provides a limited set of account-management tools. It is **not** a continuous configuration-management service, backup system, user-deletion workflow, or guarantee of bit-for-bit identical instances.
+> **Scope:** This repository initializes an Ubuntu system and provides a limited set of account-management tools. It is **not** a continuous configuration-management service, backup system, user-deletion workflow, or guarantee of bit-for-bit identical systems. It is best suited to fresh installations; see the cautions for already-used hosts below.
 
 > **Trust boundary:** This configuration intentionally grants provisioned users access to the **rootful Docker daemon** through the `docker` group. Such access is effectively **root-equivalent**. Unix primary groups and private home-directory permissions organize collaboration but do **not** provide a security boundary between mutually untrusted Docker users. Use separate VMs or appropriately configured rootless container engines when stronger isolation is required.
 
 ## Features
 
-- Keep Horizon user data focused on instance configuration while `provision-vm.sh` owns the version-controlled orchestration logic.
+- Keep machine-specific settings separate from the repository-managed provisioning logic, whether launched manually or through cloud-init.
 - Upgrade Ubuntu packages and install standard utilities, including login-history and file-indexing support.
 - Install Docker Engine, Docker CLI, containerd, Buildx, and the Compose plugin from Docker's official Ubuntu APT repository.
 - Install zsh and Vim with canonical configuration and Vim runtime files bundled in this repository—without an external BashG clone or zsh ZIP download.
-- Configure `/etc/skel`, root, and (when it exists) the pre-created Ubuntu cloud-image account.
+- Configure `/etc/skel`, root, and an existing account named `ubuntu` when present.
 - Create named collaborative groups, matching **non-login** accounts, and shared directories with setgid permissions and inheritable access-control lists (ACLs).
 - Create individual accounts with private primary groups, private home directories, a common shell/editor environment, a collaborative supplementary group, automatic Docker access, and SSH public-key authentication.
-- Allow an instance-specific list of users to receive passwordless sudo without modifying the stock `/etc/sudoers` file.
+- Allow an host-specific list of users to receive passwordless sudo without modifying the stock `/etc/sudoers` file.
 - Install the shared-group and individual-user provisioning helpers into `/usr/local/bin` for later administration.
-- Optionally schedule a reboot after successful cloud-init provisioning.
+- Optionally schedule a reboot after successful provisioning, whether launched manually or through cloud-init.
 
 ## Repository layout
 
 ```text
 manage-vms/
 ├── vm-bootstrap.sh             # Ubuntu, Docker, zsh, Vim, initial accounts and helpers
-├── provision-vm.sh             # Sourced first-boot orchestration logic
+├── provision-vm.sh             # Sourced provisioning orchestration logic
 ├── create-shared-group.sh      # Collaborative group, non-login account and ACLs
 ├── create-user.sh              # Private user, collaboration, Docker and SSH key
-├── example-invocation.sh       # Paste a customized copy into Horizon
+├── example-invocation.sh       # Machine settings and portable entrypoint
 ├── README.md
 └── files/
     ├── vim/
@@ -50,37 +50,42 @@ manage-vms/
 | Script | Arguments | Responsibility |
 | --- | --- | --- |
 | `vm-bootstrap.sh` | None | OS update, packages, Docker, shell/editor defaults, preexisting `ubuntu` account and helper installation |
-| `provision-vm.sh` | Sourced; reads instance configuration from calling shell | Apply timezone, run bootstrap and helpers, configure sudo and reboot |
+| `provision-vm.sh` | Sourced; reads host configuration from calling shell | Apply timezone, run bootstrap and helpers, configure sudo and reboot |
 | `create-shared-group.sh` | `-g GROUP` and optional `-i GID` | Collaborative group, non-login account, shared directory, setgid and ACLs |
 | `create-user.sh` | `-u USER -g GROUP -k 'PUBLIC_KEY'` | Individual user, private group/home, collaboration, Docker and SSH authorization |
-| `example-invocation.sh` | Edit marked configuration section | Minimal cloud-init entrypoint that clones the repository and sources `provision-vm.sh` |
+| `example-invocation.sh` | Edit marked configuration section | Run manually as root or as Bash user data; clones the repository and sources `provision-vm.sh` |
 
-Provisioning operations must run as **root**, as they do under cloud-init. The example **sources** `provision-vm.sh` in the existing Bash process, rather than launching a child shell, so the instance variables and the `UserKey` and `SudoUsers` arrays remain available without exporting them. Installing administrative helpers with executable permissions in `/usr/local/bin` does not grant unprivileged callers the ability to change users or groups.
+Provisioning operations must run as **root**, whether started by an administrator or by a cloud-init service. The example **sources** `provision-vm.sh` in the existing Bash process rather than launching a child shell, so its configuration variables and the `UserKey` and `SudoUsers` arrays remain available without exporting them. Installing administrative helpers with executable permissions in `/usr/local/bin` does not grant unprivileged callers the ability to change users or groups.
 
 ## Requirements and assumptions
+## Requirements and assumptions
 
-- An **Ubuntu cloud image** with cloud-init and a usable OpenStack **Configuration** tab. `vm-bootstrap.sh` checks `/etc/os-release` and rejects non-Ubuntu systems. Ubuntu 24.04 and 26.04 LTS are intended targets; verify compatibility on your image and architecture.
+- **Ubuntu 24.04 or 26.04 LTS**, running on a VM or a physical host. `vm-bootstrap.sh` checks `/etc/os-release` and rejects non-Ubuntu systems. The implementation assumes APT, systemd, Bash, and standard GNU/Linux account-management tools.
+- **Root privileges** for the initial setup (`sudo bash ...` for manual use). An automated user-data system must run the Bash script as root.
 - Network/DNS access to Ubuntu APT mirrors, `download.docker.com`, and the GitHub repository.
-- Sufficient disk space and resources for the OS upgrades, Docker installation and container workloads.
-- An anonymously cloneable repository at the URL configured in the example. Private-repository authentication is not implemented.
-- Complete, **single-line public SSH keys** for users being provisioned. Private keys, passwords and access tokens must never be placed in cloud-init user data.
-- OpenStack security groups, network addressing and an SSH service on the image that allow the intended access. The bootstrap installs `openssh-client` (used for `ssh-keygen`), **not** `openssh-server`.
-- An administrative recovery login, normally the image's initial `ubuntu` account using the OpenStack key pair selected at launch.
+- Sufficient disk space and resources for OS upgrades, Docker installation, and subsequent workloads.
+- An anonymously cloneable repository at the URL in the example. Private-repository authentication is not implemented.
+- Complete **single-line SSH public keys** for accounts being provisioned. Never place SSH private keys, passwords, or API credentials in the configuration script.
+- An SSH server and appropriate host firewall/network rules **if remote login is required**. The bootstrap installs `openssh-client` for `ssh-keygen`, **not** `openssh-server`.
+- A separate existing administrator/recovery login before the initial setup. An account named `ubuntu` is configured specially if present; other preexisting administrator accounts are not automatically given the canonical zsh and Vim files.
 
-Because the installed packages and upstream repositories change over time, identical script revisions do not necessarily produce bit-identical operating systems.
+**Cloud-init is optional.** To automate provisioning at first boot, use an Ubuntu image with cloud-init (or another mechanism capable of running a Bash script as root). For manual setup, no cloud-init installation, cloud metadata, or particular virtualization platform is required.
 
-## Quick start: OpenStack Horizon
+**Caution for existing systems:** The bootstrap upgrades OS packages, installs and enables Docker, changes root's login shell, installs standard editor/shell settings for root and the `ubuntu` account when present, and may schedule a reboot. It is intended primarily for fresh hosts, not as a non-disruptive configuration reconciler for production machines. Back up important configurations and data before running it on an already-used system.
 
-1. Push the provisioning code revision you intend to deploy and confirm that the VM can clone the repository.
-2. Open [`example-invocation.sh`](example-invocation.sh) and make a **per-instance copy** of the entire file, beginning with `#!/bin/bash`. Edit only the marked `INSTANCE CONFIGURATION` section; keep the Git clone and `source` statements unchanged.
-3. Set `Group` (the initial collaborative group) and `GroupID` (its numeric GID). You can leave `GroupID` empty for automatic allocation, but NFS or other multi-host shared storage may require consistent numeric IDs.
-4. Populate the `UserKey` associative array with each desired username and its **complete SSH public key**. The checked-in values are placeholders and will fail validation if used unchanged.
-5. Populate `SudoUsers` with only those users who should receive **passwordless sudo**. Each name must also appear in `UserKey`; the list may be empty.
-6. Set `TimeZone` to an IANA zone such as `America/New_York`, or leave it empty to retain the image default. Set `RebootAfterProvisioning=true` for a scheduled post-provisioning reboot or `false` to reboot manually.
-7. In Horizon, select **Launch Instance**, choose the Ubuntu image, network, security group and key pair, then paste the customized script into **Configuration** and launch the instance.
-8. Monitor cloud-init and verify both account creation and access before considering the VM ready.
+Upstream packages and repositories can change over time, so matching script revisions do not guarantee bit-identical systems.
 
-The configuration section resembles the following. **The public keys shown are deliberately invalid placeholders:**
+## Quick start
+
+1. Make a copy of [`example-invocation.sh`](example-invocation.sh) for the host. Keep the opening `#!/bin/bash` line and the clone/`source` commands intact.
+2. Edit only the clearly marked **HOST CONFIGURATION** section. Set the initial collaborative `Group` and optional `GroupID` (leave empty to allocate a GID automatically). On shared filesystems, coordinate numeric IDs across hosts.
+3. Set the `UserKey` associative array to the desired usernames and their **complete SSH public keys**. The repository's sample keys are intentionally invalid placeholders.
+4. Populate `SudoUsers` with the subset that should receive **passwordless sudo**. All its names must appear in `UserKey`; the array may be empty.
+5. Set `TimeZone` to an IANA zone such as `America/New_York`, or leave it empty to retain the system default. Set `RebootAfterProvisioning=true` for a delayed restart or `false` to reboot manually.
+6. Run the file as root on the target Ubuntu host, or supply its entire contents to a first-boot service that executes Bash user data as root.
+7. Verify account creation, SSH authentication, Docker access, collaborative ACLs, and the remaining service configuration.
+
+The editable portion looks like this. **The public keys below are deliberately invalid placeholders:**
 
 ```bash
 Group='collab'
@@ -99,7 +104,7 @@ declare -a SudoUsers=(
 TimeZone=''
 ```
 
-After the marked configuration section, the example contains only the initial package installation, clone and source operations:
+After the configuration section, the example contains only the minimal setup, clone and source operations:
 
 ```bash
 export DEBIAN_FRONTEND=noninteractive
@@ -113,11 +118,40 @@ git clone https://github.com/StephenAmerige/manage-vms.git "$TMP/manage-vms"
 source "$TMP/manage-vms/provision-vm.sh"
 ```
 
-Sourcing is intentional: it shares the same Bash variables and associative/indexed arrays as the user-data entrypoint. The `TMP` variable gives the orchestrator a place to prepare the temporary sudoers file; the caller's `EXIT` trap cleans up the cloned repository afterward. The example uses `set -euo pipefail` to stop on errors.
+Sourcing intentionally shares the same Bash variables and associative/indexed arrays with the orchestrator. `TMP` provides a secure temporary checkout and a place to prepare sudoers rules; the caller's `EXIT` trap removes it afterward. The entrypoint uses `set -euo pipefail` to stop on errors.
 
-**Deployment dependency:** `provision-vm.sh` must be pushed to the repository **before** any instance uses this simplified user-data script. The checked-in example is generic; do **not** commit real instance-specific access lists or public-key mappings merely to launch an instance. Public SSH keys are not secrets, but user-data may remain retrievable from the instance or the cloud control plane, and should never be used for secret storage.
+### Manual provisioning (any supported Ubuntu host)
 
-**Important:** Horizon's **ACTIVE** status does not mean cloud-init has finished. Package installation and provisioning can continue after the VM is running.
+Copy your customized script to the machine, then invoke it directly:
+
+```bash
+sudo bash ./my-host-config.sh
+```
+
+No cloud-init or cloud-provider metadata is involved. Output appears in your terminal; the script must have network access and root privileges. For a local log, run from a Bash shell with `pipefail` enabled:
+
+```bash
+set -o pipefail
+sudo bash ./my-host-config.sh 2>&1 | tee provisioning.log
+```
+
+If rebooting is enabled, it is scheduled approximately one minute after successful provisioning. Be sure the machine can be reached again after restarting.
+
+### Automated provisioning (cloud-init or equivalent)
+
+When the target image has cloud-init, paste the **entire customized Bash script** (starting with `#!/bin/bash`) into the platform's **user-data** or startup-script field. The mechanism must execute it as root. Check its logs and confirm completion; a machine being powered on or marked *running* does not imply provisioning has finished.
+
+For cloud-init, use `sudo cloud-init status --long` and inspect `/var/log/cloud-init-output.log`. Other startup mechanisms may write logs elsewhere.
+
+### Example: OpenStack Horizon
+
+In **Launch Instance > Configuration**, paste the complete customized script into the configuration field. Select an Ubuntu cloud image, suitable network/security-group settings, and an administrative SSH key pair. Cloud-init executes the script during first boot. Horizon may show the VM as **ACTIVE** before provisioning has completed; check the logs and test an actual user login.
+
+The same entrypoint can also be run manually on an Ubuntu VM created outside OpenStack or on a physical Ubuntu host. Neither the coordinator nor the helper scripts require OpenStack services or APIs.
+
+### Repository revision and configuration security
+
+**Deployment dependency:** `provision-vm.sh` must already exist in the repository being cloned. Do not commit machine-specific access lists or actual SSH-key mappings simply to deploy a host. Public keys are not secrets, but cloud user-data may remain retrievable from the guest or its management platform; never place secret material there or in the public repository.
 
 ### Execution order
 
@@ -127,13 +161,13 @@ Sourcing is intentional: it shares the same Bash variables and associative/index
 4. The orchestrator invokes `vm-bootstrap.sh` to install OS packages, Docker, shell/editor defaults, and administrative helpers.
 5. It calls the installed `create-shared-group.sh`, passing the explicit `GroupID` when given, and calls `create-user.sh` for each `UserKey` entry. All users join the specified collaborative group and `docker`.
 6. It validates and installs `/etc/sudoers.d/90-manage-vms` for the explicitly named `SudoUsers`, leaving `/etc/sudoers` unchanged.
-7. It logs completion and, if enabled, schedules a reboot **one minute later** using `shutdown -r +1` so cloud-init can finish. A scheduled reboot can be canceled with `sudo shutdown -c` before it happens.
+7. It logs completion and, if enabled, schedules a reboot **one minute later** using `shutdown -r +1` so the calling script can exit and its output can be recorded. Cancel a pending reboot with `sudo shutdown -c`.
 
-The temporary clone is removed when the invocation exits. The two installed helpers remain available for future administration. The orchestrator is a first-boot component; it is **not** installed as a long-term administration command.
+The temporary clone is removed when the invocation exits. The two installed helpers remain available for future administration. The orchestrator runs during initial setup; it is **not** installed as a long-term administration command.
 
 ### Deterministic provisioning revisions
 
-The example currently clones the repository's default branch as it exists at launch time. Its `git rev-parse HEAD` log line records which commit was used. For repeatable deployments, consider checking out a reviewed **commit SHA or tag** immediately after the clone and before running the bootstrap:
+The example currently clones the repository's default branch at execution time. Its `git rev-parse HEAD` log line records the revision used. For repeatable deployments, consider checking out a reviewed **commit SHA or tag** immediately after the clone and before sourcing the orchestrator:
 
 ```bash
 git -C "$TMP/manage-vms" checkout --detach REVIEWED_COMMIT_SHA
@@ -175,7 +209,7 @@ New users created through `useradd -m` automatically inherit `/etc/skel`. The `.
 
 ### Preexisting `ubuntu` account
 
-On standard Ubuntu cloud images, cloud-init has already created `ubuntu` **before** the bootstrap populates `/etc/skel`. When the account exists, `vm-bootstrap.sh` explicitly installs the canonical zsh and Vim files, configures its login shell as zsh, and adds it to `docker`.
+On many Ubuntu cloud images, the initial `ubuntu` account is created **before** the bootstrap populates `/etc/skel`. When that account exists (cloud image or otherwise), `vm-bootstrap.sh` explicitly installs the canonical zsh and Vim files, configures its login shell as zsh, and adds it to `docker`. On installations whose initial administrative user has another name, that account is left unchanged.
 
 The bootstrap leaves its existing SSH authorization and sudo policy in place. It avoids modifying `~ubuntu/.ssh` and does not replace the account itself.
 
@@ -188,7 +222,7 @@ During bootstrap, root-owned copies of these commands are installed with mode `0
 /usr/local/bin/create-user.sh
 ```
 
-They can be called by root or using `sudo` when users and groups need to be added later. Because the initial Git checkout is temporary, **later GitHub updates do not automatically update these installed copies**. Reinstall them explicitly or rebuild the instance when their behavior changes.
+They can be called by root or using `sudo` when users and groups need to be added later. Because the initial Git checkout is temporary, **later GitHub updates do not automatically update these installed copies**. Reinstall them explicitly or reprovision the host when their behavior changes.
 
 ## Collaborative groups and ACLs
 
@@ -214,7 +248,7 @@ A new user receives:
 | Login shell | `/bin/zsh` |
 | SSH authorization | `~/.ssh/authorized_keys`, mode `0600`, in a mode-`0700` `.ssh` directory |
 
-For a compatible existing user, the helper adds the specified supplementary memberships and sets zsh; it does not remove any previous supplementary groups. **The key supplied with `-k` is authoritative**: every invocation replaces the user's entire `authorized_keys` file rather than appending a key. This is particularly important when updating an existing student's account.
+For a compatible existing user, the helper adds the specified supplementary memberships and sets zsh; it does not remove any previous supplementary groups. **The key supplied with `-k` is authoritative**: every invocation replaces the user's entire `authorized_keys` file rather than appending a key. This is particularly important when updating an existing account.
 
 After adding a user to a supplementary group, a **new login session** is normally required for the membership to take effect. Verify with `id` and `docker ps` after reconnecting.
 
@@ -242,11 +276,11 @@ It validates the proposed rules with `visudo`, installs the file, validates the 
 steve ALL=(ALL:ALL) NOPASSWD: ALL
 ```
 
-This grants passwordless sudo only to those **explicitly designated administrators**, without editing the default `%sudo` rule in `/etc/sudoers`. `ubuntu` retains whatever sudo arrangement was provided by the cloud image.
+This grants passwordless sudo only to those **explicitly designated administrators**, without editing the default `%sudo` rule in `/etc/sudoers`. An existing `ubuntu` account retains its preexisting sudo arrangement.
 
 If `SudoUsers` is empty during an initial launch, no custom sudoers file is created. On an already configured instance, simply rerunning the orchestration with an empty list would **not** remove an existing sudoers file or revoke prior access; administrative revocation is a separate task.
 
-## Adding users and groups after launch
+## Adding users and groups after setup
 
 The installed helper commands simplify requests such as *“Please create user xyz in collaborative group pqr.”* Only a privileged administrator can successfully execute them.
 
@@ -289,11 +323,13 @@ Test SSH login using the corresponding private key from an authorized client. Af
 
 ### Removing users
 
-There is currently **no** `delete-user.sh` helper. Student offboarding and group cleanup need a separately reviewed procedure that addresses account termination, SSH access, running processes, home data, shared files, Docker workloads, and any relevant NFS identity mappings. Do not assume deleting a Unix account automatically removes all access paths or preserves everything that should be retained.
+There is currently **no** `delete-user.sh` helper. Account offboarding and group cleanup need a separately reviewed procedure that addresses account termination, SSH access, running processes, home data, shared files, Docker workloads, and any relevant NFS identity mappings. Do not assume deleting a Unix account automatically removes all access paths or preserves everything that should be retained.
 
-## Validation after first boot
+## Validation after provisioning
 
-### Monitor cloud-init
+### Monitor execution
+
+For a manual run, the terminal displays command output directly. Capture it to a file using the `tee` example above if desired. When running through cloud-init, inspect its status and logs:
 
 ```bash
 sudo cloud-init status --wait
@@ -302,9 +338,9 @@ sudo tail -n 100 /var/log/cloud-init-output.log
 sudo less /var/log/cloud-init.log
 ```
 
-`/var/log/cloud-init-output.log` contains stdout and stderr from provisioning commands; `/var/log/cloud-init.log` contains more detailed cloud-init diagnostics. You can watch progress with `sudo tail -f /var/log/cloud-init-output.log`. Horizon's instance console **Log** may show some output, but is not a substitute for the files above.
+`/var/log/cloud-init-output.log` contains stdout and stderr for cloud-init runs; `/var/log/cloud-init.log` contains additional cloud-init diagnostics. Follow progress with `sudo tail -f /var/log/cloud-init-output.log`. These paths apply to cloud-init-based deployment, **not** ordinary `sudo bash` execution.
 
-If the invocation schedules a reboot, the VM may disconnect one minute after the success message. Reconnect after it is available, then verify final service and account state. A failure before the final reboot statement normally prevents the script from scheduling that reboot because the invocation uses `set -euo pipefail`.
+If rebooting is enabled, the host may disconnect one minute after the success message. Reconnect after it is available, then verify the final services and accounts. A failure before the scheduling command normally prevents the reboot because the invocation uses `set -euo pipefail`.
 
 ### Verify accounts and permissions
 
@@ -351,39 +387,39 @@ Log in as a provisioned user and check `docker ps` (without sudo). For a user in
 
 | Symptom | What to check |
 | --- | --- |
-| Horizon says ACTIVE but users are missing | `cloud-init status --long`, `/var/log/cloud-init-output.log`; ACTIVE is not a provisioning-complete signal. |
+| Host is running but users are missing | Verify the invocation finished successfully; for cloud-init, inspect `cloud-init status --long` and `/var/log/cloud-init-output.log`. For a manual run, inspect terminal output or the saved log. |
 | Git clone fails | DNS, network egress, repository URL and anonymous clone access. |
-| `source` fails because `provision-vm.sh` is absent | Push the orchestrator before using the simplified instance script, and confirm the clone uses the intended repository revision. |
+| `source` fails because `provision-vm.sh` is absent | Push the orchestrator before using the simplified host script, and confirm the clone uses the intended repository revision. |
 | Indexing uses the wrong local hour | Check `TimeZone`, `timedatectl` and `systemctl cat plocate-updatedb.timer`. |
-| APT or Docker install fails | Ubuntu release/architecture, package repository availability, disk space, DNS and the cloud-init output log. |
+| APT or Docker install fails | Ubuntu release/architecture, repository availability, disk space, DNS, and the relevant execution log. |
 | `invalid SSH public key` | Provide exactly one complete public-key line, not a placeholder, private key or wrapped/multiline value. |
 | Group creation fails | Inspect `getent group GROUP` and `getent group GID` for name/GID collisions or a conflicting existing account. |
-| SSH login fails | Cloud-init status, sshd, OpenStack security groups, host reachability, username, matching private key and `authorized_keys` ownership/mode. |
+| SSH login fails | Provisioning completion, sshd, firewall/network access, username, matching private key and `authorized_keys` ownership/mode. |
 | `docker ps` returns permission denied | Verify `id`, `getent group docker`, socket owner/mode and a **new login session** after membership changes. Do not `chmod a+rw` the socket. |
 | Passwordless sudo fails | Verify `SudoUsers`, `sudo -l -U USER`, `/etc/sudoers.d/90-manage-vms` permissions and `sudo visudo -c`. |
 | zsh produces locale warnings | `.zshrc` selects `en_US.UTF-8`; check `locale -a` and generate/install the locale if absent. |
 | Shared file not group-writable | Inspect `getfacl` of the file and directory, ACL masks and restrictive modes applied by the application. |
 | Reboot unexpectedly pending | Check the example's `RebootAfterProvisioning` value and `shutdown` schedule; cancel with `sudo shutdown -c` if appropriate. |
-| New GitHub changes do not appear on an existing VM | First-boot provisioning is not automatic synchronization; reapply appropriate changes or rebuild. |
+| New GitHub changes do not appear on an existing host | Provisioning is not automatic synchronization; reapply appropriate changes or rebuild the host. |
 
 ## Security and reproducibility considerations
 
-- **Protect the provisioning repository.** Its scripts execute as root during first boot. Review changes before using a new revision and restrict who can push to the repository.
-- **Use public keys only in user data.** Never include private keys, passwords, API credentials or other secrets in Horizon's Configuration tab.
+- **Protect the provisioning repository.** Its scripts execute as root during setup. Review changes before using a new revision and restrict who can push to the repository.
+- **Use public keys only in configuration.** Never include private keys, passwords, API credentials or other secrets in local setup scripts, cloud user data, or the public repository.
 - **Docker is a privileged trust decision.** Every account granted rootful Docker access can potentially control the host, regardless of its separate primary group or lack of conventional sudo membership.
-- **Preserve SSH recovery access.** Keep the cloud image's initial administrative account accessible until newly provisioned SSH logins are verified. The bootstrap deliberately does not modify that account's existing SSH keys.
+- **Preserve administrative recovery access.** Keep an existing administrative account accessible until new SSH logins are verified. The bootstrap deliberately does not modify the `ubuntu` account's existing SSH keys when that account exists.
 - **Coordinate numeric identities** across hosts when using NFS or other multi-host shared filesystems. The optional `-i GID` exists for precisely that reason; dynamically assigned individual UIDs may also require attention.
-- **Do not assume that an upgraded VM has rebooted.** The example schedules a reboot only on successful completion when `RebootAfterProvisioning=true`. Reboots interrupt workloads, so be deliberate when changing that behavior for existing instances.
-- **Treat instance destruction as data loss unless storage is protected.** Rebuilding an OpenStack instance does not back up or migrate user data.
+- **Do not assume that an upgraded host has rebooted.** The example schedules a reboot only on successful completion when `RebootAfterProvisioning=true`. Reboots interrupt workloads, so be deliberate when changing that behavior for existing instances.
+- **Protect existing data.** Rebuilding a machine or VM does not back up or migrate users' files. Running the bootstrap on an existing host can replace shell/editor settings and update operating-system packages.
 - **Retain applicable third-party licenses** for bundled Vim plugins, colorschemes and other redistributed support files.
 
 ## Maintaining the repository
 
-The canonical configuration lives under `files/zsh/` and `files/vim/`. Make shared changes there and commit them. New VMs using that revision inherit the changes; existing home directories do not receive automatic updates.
+The canonical configuration lives under `files/zsh/` and `files/vim/`. Make shared changes there and commit them. New hosts using that revision inherit the changes; existing home directories do not receive automatic updates.
 
 The `/usr/local/bin` helpers on a provisioned VM are installed snapshots, not links to GitHub. Updating the repository does not replace those commands until an administrator reinstalls them or reprovisions the VM.
 
-Keep orchestration changes in `provision-vm.sh`, not copied into each instance-specific user-data script. Review and push the orchestrator and updated example together before launching new instances.
+Keep orchestration changes in `provision-vm.sh`, not copied into each machine-specific entrypoint. Review and push the orchestrator and updated example together before provisioning new hosts.
 
 Run Bash syntax checks before committing:
 
@@ -393,6 +429,6 @@ for script in vm-bootstrap.sh provision-vm.sh create-shared-group.sh create-user
 done
 ```
 
-This catches syntax errors but cannot replace a fresh-VM cloud-init integration test. Review `git diff`, commit changes conventionally, and record the revision tested in OpenStack.
+This catches Bash syntax errors but does not replace an integration test on a fresh Ubuntu host. Test both manual execution and any unattended deployment mechanism you intend to support. Review `git diff`, commit changes conventionally, and record the Git revision used.
 
 Repository: <https://github.com/StephenAmerige/manage-vms>

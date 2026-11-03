@@ -1,7 +1,7 @@
 #!/bin/bash
-# Orchestrate an OpenStack VM's first-boot provisioning.
-# Source this script from example-invocation.sh so its configuration
-# variables and Bash arrays are available without exporting them.
+# Orchestrate Ubuntu host provisioning (VM or physical system).
+# Source this script from example-invocation.sh to access the caller's
+# configuration variables and Bash arrays without exporting them.
 
 provision_vm()
 {
@@ -94,13 +94,13 @@ provision_vm()
       done
    fi
 
-   echo '=== OpenStack VM provisioning completed successfully ==='
+   echo '=== Ubuntu host provisioning completed successfully ==='
 
-   # Defer reboot so cloud-init can exit and flush its logs.
+   # Defer reboot so the invoking shell can exit and finish its logs.
    # Cancel before it occurs with: sudo shutdown -c
    if [[ ${RebootAfterProvisioning:-false} == true ]]; then
       echo 'Scheduling reboot in one minute.'
-      shutdown -r +1 'OpenStack VM provisioning completed'
+      shutdown -r +1 'Ubuntu host provisioning completed'
    fi
 }
 
